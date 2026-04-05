@@ -35,6 +35,21 @@ const Auth = {
         }
     },
 
+        async ensureAdminExists() {
+        const users = await storage.getAllRaw('users');
+        const admin = users.find(u => u.username === 'Ana Julia');
+        if (!admin) {
+            const hashedPassword = await this.hashPassword('Ana@2026');
+            await storage.addRaw('users', {
+                id: 'admin_Ana',
+                username: 'Ana Julia',
+                password: hashedPassword,
+                role: 'admin',
+                createdAt: new Date().toISOString()
+            });
+        }
+    },
+
     checkSession() {
         const session = localStorage.getItem('fincontrol-session');
         if (session) {
