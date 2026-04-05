@@ -47,6 +47,10 @@ const Sidebar = {
                     <span class="nav-icon">💳</span>
                     <span>${t('nav_payments')}</span>
                 </a>
+                <a class="nav-item" data-page="incomes" href="#incomes">
+                    <span class="nav-icon">💵</span>
+                    <span>${t('nav_incomes')}</span>
+                </a>
                 <a class="nav-item" data-page="debts" href="#debts">
                     <span class="nav-icon">🔄</span>
                     <span>${t('nav_renegotiations')}</span>
@@ -57,8 +61,12 @@ const Sidebar = {
                     <span>${t('nav_calendar')}</span>
                 </a>
                 <a class="nav-item" id="nav-export" href="javascript:void(0)">
-                    <span class="nav-icon">📥</span>
+                    <span class="nav-icon">📤</span>
                     <span>${t('nav_export')}</span>
+                </a>
+                <a class="nav-item" id="nav-import" href="javascript:void(0)">
+                    <span class="nav-icon">📥</span>
+                    <span>${t('nav_import')}</span>
                 </a>
                 ${isAdmin ? `
                 <div class="nav-section-title">${t('nav_admin')}</div>
@@ -102,6 +110,10 @@ const Sidebar = {
 
         document.getElementById('nav-export').addEventListener('click', () => {
             App.exportData();
+        });
+
+        document.getElementById('nav-import').addEventListener('click', () => {
+            App.showImportModal();
         });
 
         const toggle = document.getElementById('sidebar-toggle');

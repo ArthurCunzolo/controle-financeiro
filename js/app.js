@@ -98,6 +98,7 @@ const App = {
             bills: 'page_bills',
             payments: 'page_payments',
             debts: 'page_debts',
+            incomes: 'page_incomes',
             calendar: 'page_calendar',
             users: 'page_users'
         };
@@ -109,6 +110,7 @@ const App = {
             case 'bills': await Bills.render(); break;
             case 'payments': await Payments.render(); break;
             case 'debts': await Debts.render(); break;
+            case 'incomes': await Incomes.render(); break;
             case 'calendar': await CalendarView.render(); break;
             case 'users': await Auth.renderUserManagement(); break;
             default: await Dashboard.render();
@@ -166,19 +168,10 @@ const App = {
             const a = document.createElement('a');
             a.href = url;
             a.download = `fincontrol-backup-${Auth.currentUser.username}-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
             a.click();
+            document.body.removeChild(a);
             URL.revokeObjectURL(url);
-
-            if (data.bills.length > 0) {
-                const csv = this.toCSV(data.bills, ['name', 'category', 'creditor', 'amount', 'dueDate', 'type', 'status']);
-                const csvBlob = new Blob([csv], { type: 'text/csv' });
-                const csvUrl = URL.createObjectURL(csvBlob);
-                const csvA = document.createElement('a');
-                csvA.href = csvUrl;
-                csvA.download = `fincontrol-bills-${Auth.currentUser.username}-${new Date().toISOString().split('T')[0]}.csv`;
-                csvA.click();
-                URL.revokeObjectURL(csvUrl);
-            }
             this.showToast(t('export_success'), 'success');
         } catch (err) {
             this.showToast(t('export_error', { msg: err.message }), 'error');
@@ -197,6 +190,233 @@ const App = {
             }).join(',');
         });
         return [header, ...rows].join('\n');
+    },
+
+    // ===================== IMPORT DATA =====================
+
+    /** Pending import data (set when file is parsed) */
+    _importData: null,
+
+    /** Show the import modal with drag-and-drop & preview */
+    showImportModal() {
+        // Remove any existing import modal
+        const existing = document.getElementById('import-modal-overlay');
+        if (existing) existing.remove();
+
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay active';
+        overlay.id = 'import-modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-content import-modal">
+                <div class="modal-header">
+                    <h3>${t('import_modal_title')}</h3>
+                    <button class="modal-close-btn" id="import-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 14px;">${t('import_select_file_desc')}</p>
+
+                    <!-- Drop Zone -->
+                    <div class="import-drop-zone" id="import-drop-zone">
+                        <div class="import-drop-icon">📂</div>
+                        <p class="import-drop-text">${t('import_drop_zone')}</p>
+                        <input type="file" accept=".json" id="import-file-input" style="display:none;">
+                    </div>
+
+                    <!-- File Info (hidden until file is loaded) -->
+                    <div class="import-file-info hidden" id="import-file-info">
+                        <div class="import-file-badge">
+                            <span class="import-file-icon">📄</span>
+                            <span class="import-file-name" id="import-file-name"></span>
+                            <button class="import-file-remove" id="import-file-remove" title="Remove">✕</button>
+                        </div>
+                    </div>
+
+                    <!-- Preview (hidden until file is parsed) -->
+                    <div class="import-preview hidden" id="import-preview">
+                        <h4>${t('import_preview_title')}</h4>
+                        <div class="import-preview-grid" id="import-preview-grid"></div>
+                        <div class="import-exported-at" id="import-exported-at"></div>
+                    </div>
+
+                    <!-- Import Mode -->
+                    <div class="import-mode-section hidden" id="import-mode-section">
+                        <h4>${t('import_mode')}</h4>
+                        <label class="import-radio-label">
+                            <input type="radio" name="import-mode" value="merge" checked>
+                            <span class="import-radio-text">${t('import_mode_merge')}</span>
+                        </label>
+                        <label class="import-radio-label">
+                            <input type="radio" name="import-mode" value="replace">
+                            <span class="import-radio-text">${t('import_mode_replace')}</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" id="import-cancel">${t('cancel')}</button>
+                    <button class="btn btn-primary" id="import-confirm" disabled>${t('import_btn')}</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        // Reset state
+        this._importData = null;
+
+        // Bind events
+        const closeModal = () => { overlay.remove(); this._importData = null; };
+        overlay.querySelector('#import-close').addEventListener('click', closeModal);
+        overlay.querySelector('#import-cancel').addEventListener('click', closeModal);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+        document.addEventListener('keydown', function escHandler(e) {
+            if (e.key === 'Escape') { closeModal(); document.removeEventListener('keydown', escHandler); }
+        });
+
+        const dropZone = overlay.querySelector('#import-drop-zone');
+        const fileInput = overlay.querySelector('#import-file-input');
+
+        // Click to browse
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        // File selected via input
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) this._handleImportFile(e.target.files[0]);
+        });
+
+        // Drag & Drop
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            if (e.dataTransfer.files.length > 0) this._handleImportFile(e.dataTransfer.files[0]);
+        });
+
+        // Remove file
+        overlay.querySelector('#import-file-remove').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this._importData = null;
+            fileInput.value = '';
+            document.getElementById('import-file-info').classList.add('hidden');
+            document.getElementById('import-preview').classList.add('hidden');
+            document.getElementById('import-mode-section').classList.add('hidden');
+            document.getElementById('import-drop-zone').classList.remove('hidden');
+            document.getElementById('import-confirm').disabled = true;
+        });
+
+        // Confirm import
+        overlay.querySelector('#import-confirm').addEventListener('click', () => this._executeImport());
+    },
+
+    /** Parse and preview the selected import file */
+    _handleImportFile(file) {
+        if (!file.name.toLowerCase().endsWith('.json')) {
+            this.showToast(t('import_error_invalid'), 'error');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+
+                // Validate structure
+                if (!data.bills && !data.payments && !data.renegotiations && !data.incomes) {
+                    this.showToast(t('import_error_invalid'), 'error');
+                    return;
+                }
+
+                const billsCount = (data.bills || []).length;
+                const paymentsCount = (data.payments || []).length;
+                const renosCount = (data.renegotiations || []).length;
+                const incomesCount = (data.incomes || []).length;
+                const total = billsCount + paymentsCount + renosCount + incomesCount;
+
+                if (total === 0) {
+                    this.showToast(t('import_error_empty'), 'warning');
+                    return;
+                }
+
+                this._importData = data;
+
+                // Update UI — show file info
+                document.getElementById('import-drop-zone').classList.add('hidden');
+                document.getElementById('import-file-info').classList.remove('hidden');
+                document.getElementById('import-file-name').textContent = file.name;
+
+                // Show preview
+                const previewGrid = document.getElementById('import-preview-grid');
+                previewGrid.innerHTML = `
+                    ${billsCount > 0 ? `<div class="import-preview-card"><span class="import-preview-icon">📋</span><span class="import-preview-count">${t('import_bills_count', { n: billsCount })}</span></div>` : ''}
+                    ${paymentsCount > 0 ? `<div class="import-preview-card"><span class="import-preview-icon">💳</span><span class="import-preview-count">${t('import_payments_count', { n: paymentsCount })}</span></div>` : ''}
+                    ${renosCount > 0 ? `<div class="import-preview-card"><span class="import-preview-icon">🔄</span><span class="import-preview-count">${t('import_renegotiations_count', { n: renosCount })}</span></div>` : ''}
+                    ${incomesCount > 0 ? `<div class="import-preview-card"><span class="import-preview-icon">💵</span><span class="import-preview-count">${t('import_incomes_count', { n: incomesCount })}</span></div>` : ''}
+                `;
+
+                const exportedAtEl = document.getElementById('import-exported-at');
+                if (data.exportedAt) {
+                    const date = new Date(data.exportedAt);
+                    exportedAtEl.textContent = `${t('import_exported_at')}: ${date.toLocaleDateString(i18n.getLocale())} ${date.toLocaleTimeString(i18n.getLocale())}`;
+                } else {
+                    exportedAtEl.textContent = '';
+                }
+
+                document.getElementById('import-preview').classList.remove('hidden');
+                document.getElementById('import-mode-section').classList.remove('hidden');
+                document.getElementById('import-confirm').disabled = false;
+
+            } catch (err) {
+                this.showToast(t('import_error_invalid'), 'error');
+            }
+        };
+        reader.readAsText(file);
+    },
+
+    /** Execute the import after confirmation */
+    async _executeImport() {
+        if (!this._importData) {
+            this.showToast(t('import_error_no_file'), 'error');
+            return;
+        }
+
+        const mode = document.querySelector('input[name="import-mode"]:checked').value;
+
+        // If replace mode, ask for confirmation
+        if (mode === 'replace') {
+            const confirmed = await Modal.confirm(
+                t('import_confirm_replace_title'),
+                t('import_confirm_replace_msg')
+            );
+            if (!confirmed) return;
+        }
+
+        // Disable the button and show loading state
+        const btn = document.getElementById('import-confirm');
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = t('import_processing');
+
+        try {
+            if (mode === 'replace') {
+                await storage.clearUserData();
+            }
+
+            const count = await storage.importData(this._importData);
+
+            // Close modal
+            const overlay = document.getElementById('import-modal-overlay');
+            if (overlay) overlay.remove();
+            this._importData = null;
+
+            this.showToast(t('import_success', { n: count }), 'success');
+
+            // Refresh current page
+            await this.navigate(this.currentPage);
+
+        } catch (err) {
+            btn.disabled = false;
+            btn.textContent = originalText;
+            this.showToast(t('import_error', { msg: err.message }), 'error');
+        }
     }
 };
 

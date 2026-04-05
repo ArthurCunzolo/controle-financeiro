@@ -22,6 +22,8 @@ const Payments = {
                             <option value="bank_transfer">${t('method_bank_transfer')}</option>
                             <option value="cash">${t('method_cash')}</option>
                             <option value="boleto">${t('method_boleto')}</option>
+                            <option value="vr">${t('method_vr')}</option>
+                            <option value="va">${t('method_va')}</option>
                         </select>
                         <select class="filter-select" id="payments-filter-month">
                             <option value="">${t('payments_all_months')}</option>
@@ -72,6 +74,8 @@ const Payments = {
                                     <option value="bank_transfer">🏦 ${t('method_bank_transfer')}</option>
                                     <option value="cash">💵 ${t('method_cash')}</option>
                                     <option value="boleto">📄 ${t('method_boleto')}</option>
+                                    <option value="vr">🍽️ ${t('method_vr')}</option>
+                                    <option value="va">🛒 ${t('method_va')}</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -337,7 +341,9 @@ const Payments = {
             debit_card: `<span class="badge badge-info">💳 ${t('method_debit_card')}</span>`,
             bank_transfer: `<span class="badge badge-neutral">🏦 ${t('method_bank_transfer')}</span>`,
             cash: `<span class="badge badge-warning">💵 ${t('method_cash')}</span>`,
-            boleto: `<span class="badge badge-neutral">📄 ${t('method_boleto')}</span>`
+            boleto: `<span class="badge badge-neutral">📄 ${t('method_boleto')}</span>`,
+            vr: `<span class="badge badge-info">🍽️ ${t('method_vr')}</span>`,
+            va: `<span class="badge badge-info">🛒 ${t('method_va')}</span>`
         };
         return map[method] || method;
     }

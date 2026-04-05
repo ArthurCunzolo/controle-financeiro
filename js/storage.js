@@ -10,7 +10,7 @@
  */
 
 const DB_NAME = "FinancialAssistantDB";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 class StorageService {
   constructor() {
@@ -83,6 +83,14 @@ class StorageService {
           if (!renoStore.indexNames.contains("userId")) {
             renoStore.createIndex("userId", "userId", { unique: false });
           }
+        }
+
+        // Incomes store (new in v3)
+        if (!db.objectStoreNames.contains("incomes")) {
+          const incomeStore = db.createObjectStore("incomes", { keyPath: "id" });
+          incomeStore.createIndex("date", "date", { unique: false });
+          incomeStore.createIndex("type", "type", { unique: false });
+          incomeStore.createIndex("userId", "userId", { unique: false });
         }
       };
 
@@ -256,34 +264,59 @@ class StorageService {
     const bills = await this.getAll("bills");
     const payments = await this.getAll("payments");
     const renegotiations = await this.getAll("renegotiations");
+    const incomes = await this.getAll("incomes");
     return {
       bills,
       payments,
       renegotiations,
+      incomes,
       exportedAt: new Date().toISOString(),
     };
   }
 
-  /** Import data from a backup */
+  /** Clear all data for the current user (used by import-replace mode) */
+  async clearUserData() {
+    const stores = ["bills", "payments", "renegotiations", "incomes"];
+    for (const storeName of stores) {
+      const records = await this.getAll(storeName);
+      for (const record of records) {
+        await this.delete(storeName, record.id);
+      }
+    }
+  }
+
+  /** Import data from a backup — returns count of imported records */
   async importData(data) {
+    let count = 0;
     if (data.bills) {
       for (const bill of data.bills) {
         bill.userId = this._getUserId();
         await this.update("bills", bill);
+        count++;
       }
     }
     if (data.payments) {
       for (const payment of data.payments) {
         payment.userId = this._getUserId();
         await this.update("payments", payment);
+        count++;
       }
     }
     if (data.renegotiations) {
       for (const reno of data.renegotiations) {
         reno.userId = this._getUserId();
         await this.update("renegotiations", reno);
+        count++;
       }
     }
+    if (data.incomes) {
+      for (const income of data.incomes) {
+        income.userId = this._getUserId();
+        await this.update("incomes", income);
+        count++;
+      }
+    }
+    return count;
   }
 }
 

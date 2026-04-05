@@ -1506,3 +1506,236 @@ textarea {
   color: var(--text-sidebar);
 }
 
+/* ===================== IMPORT MODAL ===================== */
+.import-modal {
+  max-width: 520px;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+  line-height: 1;
+}
+
+.modal-close-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* --- Drop Zone --- */
+.import-drop-zone {
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 40px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: var(--bg-secondary);
+}
+
+.import-drop-zone:hover {
+  border-color: var(--primary-400);
+  background: var(--primary-50);
+}
+
+.import-drop-zone.drag-over {
+  border-color: var(--primary-500);
+  background: var(--primary-50);
+  transform: scale(1.02);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+}
+
+[data-theme="dark"] .import-drop-zone:hover,
+[data-theme="dark"] .import-drop-zone.drag-over {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.import-drop-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+  animation: floatIcon 3s ease-in-out infinite;
+}
+
+@keyframes floatIcon {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.import-drop-text {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* --- File Info Badge --- */
+.import-file-info {
+  margin-bottom: 16px;
+}
+
+.import-file-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--success-50);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: var(--radius-md);
+  animation: fadeIn 0.3s ease;
+}
+
+[data-theme="dark"] .import-file-badge {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.import-file-icon {
+  font-size: 20px;
+}
+
+.import-file-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.import-file-remove {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+}
+
+.import-file-remove:hover {
+  background: var(--danger-50);
+  color: var(--danger-600);
+}
+
+/* --- Preview Section --- */
+.import-preview {
+  margin-top: 20px;
+  animation: fadeIn 0.4s ease;
+}
+
+.import-preview h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.import-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.import-preview-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.import-preview-icon {
+  font-size: 20px;
+}
+
+.import-preview-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.import-exported-at {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+/* --- Mode Radio Section --- */
+.import-mode-section {
+  margin-top: 20px;
+  animation: fadeIn 0.4s ease;
+}
+
+.import-mode-section h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.import-radio-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+  margin-bottom: 8px;
+}
+
+.import-radio-label:hover {
+  background: var(--bg-secondary);
+  border-color: var(--primary-300);
+}
+
+.import-radio-label:has(input:checked) {
+  border-color: var(--primary-500);
+  background: var(--primary-50);
+}
+
+[data-theme="dark"] .import-radio-label:has(input:checked) {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.import-radio-label input[type="radio"] {
+  width: auto;
+  min-width: 16px;
+  margin-top: 2px;
+  accent-color: var(--primary-600);
+}
+
+.import-radio-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* --- Responsive --- */
+@media (max-width: 480px) {
+  .import-modal {
+    max-width: 100%;
+  }
+
+  .import-preview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .import-drop-zone {
+    padding: 28px 16px;
+  }
+}

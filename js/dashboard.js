@@ -44,11 +44,12 @@ const Dashboard = {
         const bills = await storage.getAll('bills');
         const payments = await storage.getAll('payments');
         const renos = await storage.getAll('renegotiations');
+        const incomes = await storage.getAll('incomes');
 
         this.computeStatuses(bills, payments);
-        this.renderKPIs(bills, payments, renos);
+        this.renderKPIs(bills, payments, renos, incomes);
         this.renderAlerts(bills, renos);
-        this.renderCharts(bills, payments);
+        this.renderCharts(bills, payments, incomes);
         this.renderRecentPayments(payments, bills);
 
         const overdue = bills.filter(b => b.status === 'overdue').length;
@@ -69,30 +70,54 @@ const Dashboard = {
         });
     },
 
-    renderKPIs(bills, payments, renos) {
+    renderKPIs(bills, payments, renos, incomes) {
         const now = new Date();
         const currentMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+        
         const monthlyBills = bills.filter(b => b.dueDate.startsWith(currentMonth));
         const totalExpenses = monthlyBills.reduce((sum, b) => sum + parseFloat(b.amount), 0);
+        
         const monthlyPayments = payments.filter(p => p.paymentDate.startsWith(currentMonth));
         const totalPaid = monthlyPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+        
         const pendingBills = bills.filter(b => b.status === 'pending' || b.status === 'partial');
         const totalPending = pendingBills.reduce((sum, b) => sum + Math.max(0, parseFloat(b.amount) - (b.totalPaid || 0)), 0);
+        
         const overdueBills = bills.filter(b => b.status === 'overdue');
         const totalOverdue = overdueBills.reduce((sum, b) => sum + parseFloat(b.amount), 0);
+        
         const activeRenos = renos.filter(r => r.status === 'active');
         const totalRenoDebt = activeRenos.reduce((sum, r) => sum + parseFloat(r.totalAmount), 0);
 
+        const monthlyIncomes = incomes.filter(i => i.date.startsWith(currentMonth));
+        const totalMoneyIncome = monthlyIncomes.filter(i => i.type !== 'va' && i.type !== 'vr').reduce((sum, i) => sum + parseFloat(i.amount), 0);
+        const totalBenefits = monthlyIncomes.filter(i => i.type === 'va' || i.type === 'vr').reduce((sum, i) => sum + parseFloat(i.amount), 0);
+        
+        const netBalance = totalMoneyIncome - totalPaid;
+
         document.getElementById('dashboard-kpis').innerHTML = `
+            <div class="kpi-card success" style="grid-column: span 2; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <div class="kpi-header"><span class="kpi-label" style="font-size: 16px; font-weight: 600;">${t('kpi_balance')}</span></div>
+                    <div class="kpi-value" style="font-size: 32px;">R$ ${netBalance.toFixed(2)}</div>
+                    <div class="kpi-subtitle">Income - Paid</div>
+                </div>
+                <div style="font-size: 48px; opacity: 0.2;">💵</div>
+            </div>
+            <div class="kpi-card info">
+                <div class="kpi-header"><span class="kpi-label">${t('kpi_total_income')}</span><div class="kpi-icon">📈</div></div>
+                <div class="kpi-value">R$ ${totalMoneyIncome.toFixed(2)}</div>
+                <div class="kpi-subtitle">${t('incomes_this_month', { n: monthlyIncomes.filter(i => i.type !== 'va' && i.type !== 'vr').length })}</div>
+            </div>
+            <div class="kpi-card" style="background: var(--surface-color); border-left: 4px solid #8b5cf6;">
+                <div class="kpi-header"><span class="kpi-label">${t('kpi_benefits_income')}</span><div class="kpi-icon">🍔</div></div>
+                <div class="kpi-value">R$ ${totalBenefits.toFixed(2)}</div>
+                <div class="kpi-subtitle">${t('incomes_this_month', { n: monthlyIncomes.filter(i => i.type === 'va' || i.type === 'vr').length })}</div>
+            </div>
             <div class="kpi-card primary">
                 <div class="kpi-header"><span class="kpi-label">${t('kpi_monthly_expenses')}</span><div class="kpi-icon">📊</div></div>
                 <div class="kpi-value">R$ ${totalExpenses.toFixed(2)}</div>
                 <div class="kpi-subtitle">${t('kpi_bills_this_month', { n: monthlyBills.length })}</div>
-            </div>
-            <div class="kpi-card success">
-                <div class="kpi-header"><span class="kpi-label">${t('kpi_paid_this_month')}</span><div class="kpi-icon">✅</div></div>
-                <div class="kpi-value">R$ ${totalPaid.toFixed(2)}</div>
-                <div class="kpi-subtitle">${t('kpi_payments_made', { n: monthlyPayments.length })}</div>
             </div>
             <div class="kpi-card warning">
                 <div class="kpi-header"><span class="kpi-label">${t('kpi_pending_bills')}</span><div class="kpi-icon">⏳</div></div>
@@ -103,11 +128,6 @@ const Dashboard = {
                 <div class="kpi-header"><span class="kpi-label">${t('kpi_overdue')}</span><div class="kpi-icon">🔴</div></div>
                 <div class="kpi-value">R$ ${totalOverdue.toFixed(2)}</div>
                 <div class="kpi-subtitle">${t('kpi_overdue_bills', { n: overdueBills.length })}</div>
-            </div>
-            <div class="kpi-card info">
-                <div class="kpi-header"><span class="kpi-label">${t('kpi_renegotiated_debt')}</span><div class="kpi-icon">🔄</div></div>
-                <div class="kpi-value">R$ ${totalRenoDebt.toFixed(2)}</div>
-                <div class="kpi-subtitle">${t('kpi_active_renegotiations', { n: activeRenos.length })}</div>
             </div>
         `;
     },
@@ -183,7 +203,7 @@ const Dashboard = {
         container.innerHTML = html;
     },
 
-    renderCharts(bills, payments) {
+    renderCharts(bills, payments, incomes) {
         Object.values(this.charts).forEach(c => c.destroy());
         this.charts = {};
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -191,7 +211,7 @@ const Dashboard = {
         const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
         this.renderCategoryChart(bills, textColor);
         this.renderMethodChart(payments, textColor, gridColor);
-        this.renderTrendChart(bills, payments, textColor, gridColor);
+        this.renderTrendChart(bills, payments, incomes, textColor, gridColor);
         this.renderStatusChart(bills, textColor);
     },
 
@@ -242,7 +262,7 @@ const Dashboard = {
         }
     },
 
-    renderTrendChart(bills, payments, textColor, gridColor) {
+    renderTrendChart(bills, payments, incomes, textColor, gridColor) {
         const months = [];
         const now = new Date();
         const locale = i18n.getLocale();
@@ -252,6 +272,8 @@ const Dashboard = {
         }
         const billsByMonth = months.map(m => bills.filter(b => b.dueDate.startsWith(m)).reduce((sum, b) => sum + parseFloat(b.amount), 0));
         const paidByMonth = months.map(m => payments.filter(p => p.paymentDate.startsWith(m)).reduce((sum, p) => sum + parseFloat(p.amount), 0));
+        const incomesByMonth = months.map(m => incomes.filter(inc => inc.date.startsWith(m) && inc.type !== 'vr' && inc.type !== 'va').reduce((sum, inc) => sum + parseFloat(inc.amount), 0));
+        
         const monthLabels = months.map(m => {
             const [y, mo] = m.split('-');
             return new Date(y, parseInt(mo)-1).toLocaleDateString(locale, { month: 'short', year: '2-digit' });
@@ -264,8 +286,9 @@ const Dashboard = {
                 data: {
                     labels: monthLabels,
                     datasets: [
-                        { label: t('chart_expected'), data: billsByMonth, borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.1)', fill: true, tension: 0.4, pointBackgroundColor: '#6366f1', pointRadius: 4 },
-                        { label: t('chart_paid'), data: paidByMonth, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4, pointBackgroundColor: '#10b981', pointRadius: 4 }
+                        { label: t('chart_income'), data: incomesByMonth, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4, pointBackgroundColor: '#10b981', pointRadius: 4 },
+                        { label: t('chart_expected'), data: billsByMonth, borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.1)', fill: true, tension: 0.4, pointBackgroundColor: '#6366f1', pointRadius: 4, hidden: true },
+                        { label: t('chart_paid'), data: paidByMonth, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: true, tension: 0.4, pointBackgroundColor: '#ef4444', pointRadius: 4 }
                     ]
                 },
                 options: {
