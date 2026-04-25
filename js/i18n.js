@@ -30,6 +30,7 @@ const i18n = {
             all: 'All',
             unknown: 'Unknown',
             complete: 'complete',
+            confirm: 'Confirm',
             secure_client_side: 'Secure client-side financial management',
 
             // ── Login ──
@@ -80,6 +81,7 @@ const i18n = {
             kpi_total_income: 'Monthly Income',
             kpi_benefits_income: 'Benefits (VR/VA)',
             kpi_balance: 'Net Balance',
+            kpi_balance_subtitle: 'Income - Expenses',
             kpi_bills_this_month: '{n} bills this month',
             kpi_payments_made: '{n} payments made',
             kpi_bills_pending: '{n} bills pending',
@@ -395,6 +397,7 @@ const i18n = {
             all: 'Todos',
             unknown: 'Desconhecido',
             complete: 'concluído',
+            confirm: 'Confirmar',
             secure_client_side: 'Gestão financeira segura no navegador',
 
             // ── Login ──
@@ -445,6 +448,7 @@ const i18n = {
             kpi_total_income: 'Renda Mensal',
             kpi_benefits_income: 'Benefícios (VR/VA)',
             kpi_balance: 'Saldo Líquido',
+            kpi_balance_subtitle: 'Entradas - Saídas',
             kpi_bills_this_month: '{n} contas este mês',
             kpi_payments_made: '{n} pagamentos realizados',
             kpi_bills_pending: '{n} contas pendentes',
@@ -594,6 +598,8 @@ const i18n = {
             method_bank_transfer: 'Transferência Bancária',
             method_cash: 'Dinheiro',
             method_boleto: 'Boleto',
+            method_vr: 'Vale Refeição (VR)',
+            method_va: 'Vale Alimentação (VA)',
 
             // ── Módulo de Pagamentos ──
             payments_title: '💳 Registros de Pagamento',

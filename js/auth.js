@@ -22,31 +22,52 @@ const Auth = {
 
     async ensureAdminExists() {
         const users = await storage.getAllRaw('users');
-        const admin = users.find(u => u.username === 'Arthur');
-        if (!admin) {
-            const hashedPassword = await this.hashPassword('Zaq12wsx@!');
+        
+        // Admin Arthur
+        const adminArthur = users.find(u => u.username === 'Arthur');
+        const hashedPasswordArthur = await this.hashPassword('Zaq12wsx@!');
+        if (!adminArthur) {
             await storage.addRaw('users', {
                 id: 'admin_arthur',
                 username: 'Arthur',
-                password: hashedPassword,
+                password: hashedPasswordArthur,
+                role: 'admin',
+                createdAt: new Date().toISOString()
+            });
+        } else {
+            adminArthur.password = hashedPasswordArthur;
+            adminArthur.role = 'admin';
+            await storage.updateRaw('users', adminArthur);
+        }
+
+        // Admin Ana Julia
+        const adminAna = users.find(u => u.username === 'Ana Julia');
+        if (!adminAna) {
+            const hashedPasswordAna = await this.hashPassword('Ana@2026');
+            await storage.addRaw('users', {
+                id: 'admin_Ana',
+                username: 'Ana Julia',
+                password: hashedPasswordAna,
                 role: 'admin',
                 createdAt: new Date().toISOString()
             });
         }
-    },
 
-        async ensureAdminExists() {
-        const users = await storage.getAllRaw('users');
-        const admin = users.find(u => u.username === 'Ana Julia');
-        if (!admin) {
-            const hashedPassword = await this.hashPassword('Ana@2026');
+        // Admin deivide
+        const adminDeivide = users.find(u => u.username === 'deivide');
+        const hashedPasswordDeivide = await this.hashPassword('Pacu@1710');
+        if (!adminDeivide) {
             await storage.addRaw('users', {
-                id: 'admin_Ana',
-                username: 'Ana Julia',
-                password: hashedPassword,
+                id: 'admin_deivide',
+                username: 'deivide',
+                password: hashedPasswordDeivide,
                 role: 'admin',
                 createdAt: new Date().toISOString()
             });
+        } else {
+            adminDeivide.password = hashedPasswordDeivide;
+            adminDeivide.role = 'admin';
+            await storage.updateRaw('users', adminDeivide);
         }
     },
 

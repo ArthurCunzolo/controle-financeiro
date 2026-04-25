@@ -180,7 +180,7 @@ const Bills = {
             const billPayments = payments.filter(p => p.billId === bill.id);
             const totalPaid = billPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
             const now = new Date();
-            const dueDate = new Date(bill.dueDate);
+            const dueDate = new Date(bill.dueDate + 'T00:00:00');
 
             if (totalPaid >= bill.amount) bill.status = 'paid';
             else if (totalPaid > 0) bill.status = 'partial';
@@ -298,7 +298,7 @@ const Bills = {
             type: document.getElementById('bill-type').value,
             totalInstallments: parseInt(document.getElementById('bill-total-installments').value) || null,
             currentInstallment: parseInt(document.getElementById('bill-current-installment').value) || null,
-            tags: tagsVal ? tagsVal.split(',').map(t => t.trim()) : [],
+            tags: tagsVal ? tagsVal.split(',').map(tag => tag.trim()) : [],
             notes: document.getElementById('bill-notes').value,
             status: 'pending'
         };

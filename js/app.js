@@ -2,6 +2,12 @@
  * app.js — Main Application Controller (i18n)
  */
 
+/** Format a number as Brazilian Real currency (R$ 1.234,56) */
+function formatCurrency(value) {
+    const num = parseFloat(value) || 0;
+    return 'R$ ' + num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 const App = {
     currentPage: 'dashboard',
 

@@ -130,21 +130,21 @@ const Debts = {
                     <span class="kpi-label">${t('debts_kpi_total_reno')}</span>
                     <div class="kpi-icon">💰</div>
                 </div>
-                <div class="kpi-value">R$ ${totalDebt.toFixed(2)}</div>
+                <div class="kpi-value">${formatCurrency(totalDebt)}</div>
             </div>
             <div class="kpi-card success">
                 <div class="kpi-header">
                     <span class="kpi-label">${t('debts_kpi_total_paid')}</span>
                     <div class="kpi-icon">✅</div>
                 </div>
-                <div class="kpi-value">R$ ${totalPaid.toFixed(2)}</div>
+                <div class="kpi-value">${formatCurrency(totalPaid)}</div>
             </div>
             <div class="kpi-card warning">
                 <div class="kpi-header">
                     <span class="kpi-label">${t('debts_kpi_remaining')}</span>
                     <div class="kpi-icon">⏳</div>
                 </div>
-                <div class="kpi-value">R$ ${totalRemaining.toFixed(2)}</div>
+                <div class="kpi-value">${formatCurrency(totalRemaining)}</div>
                 <div class="kpi-subtitle">${t('debts_kpi_installments_pending', { n: pendingInstallments })}</div>
             </div>
         `;

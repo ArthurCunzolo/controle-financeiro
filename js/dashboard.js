@@ -99,34 +99,34 @@ const Dashboard = {
             <div class="kpi-card success" style="grid-column: span 2; display: flex; align-items: center; justify-content: space-between;">
                 <div>
                     <div class="kpi-header"><span class="kpi-label" style="font-size: 16px; font-weight: 600;">${t('kpi_balance')}</span></div>
-                    <div class="kpi-value" style="font-size: 32px;">R$ ${netBalance.toFixed(2)}</div>
-                    <div class="kpi-subtitle">Income - Paid</div>
+                    <div class="kpi-value" style="font-size: 32px;">${formatCurrency(netBalance)}</div>
+                    <div class="kpi-subtitle">${t('kpi_balance_subtitle')}</div>
                 </div>
                 <div style="font-size: 48px; opacity: 0.2;">💵</div>
             </div>
             <div class="kpi-card info">
                 <div class="kpi-header"><span class="kpi-label">${t('kpi_total_income')}</span><div class="kpi-icon">📈</div></div>
-                <div class="kpi-value">R$ ${totalMoneyIncome.toFixed(2)}</div>
+                <div class="kpi-value">${formatCurrency(totalMoneyIncome)}</div>
                 <div class="kpi-subtitle">${t('incomes_this_month', { n: monthlyIncomes.filter(i => i.type !== 'va' && i.type !== 'vr').length })}</div>
             </div>
             <div class="kpi-card" style="background: var(--surface-color); border-left: 4px solid #8b5cf6;">
                 <div class="kpi-header"><span class="kpi-label">${t('kpi_benefits_income')}</span><div class="kpi-icon">🍔</div></div>
-                <div class="kpi-value">R$ ${totalBenefits.toFixed(2)}</div>
+                <div class="kpi-value">${formatCurrency(totalBenefits)}</div>
                 <div class="kpi-subtitle">${t('incomes_this_month', { n: monthlyIncomes.filter(i => i.type === 'va' || i.type === 'vr').length })}</div>
             </div>
             <div class="kpi-card primary">
                 <div class="kpi-header"><span class="kpi-label">${t('kpi_monthly_expenses')}</span><div class="kpi-icon">📊</div></div>
-                <div class="kpi-value">R$ ${totalExpenses.toFixed(2)}</div>
+                <div class="kpi-value">${formatCurrency(totalExpenses)}</div>
                 <div class="kpi-subtitle">${t('kpi_bills_this_month', { n: monthlyBills.length })}</div>
             </div>
             <div class="kpi-card warning">
                 <div class="kpi-header"><span class="kpi-label">${t('kpi_pending_bills')}</span><div class="kpi-icon">⏳</div></div>
-                <div class="kpi-value">R$ ${totalPending.toFixed(2)}</div>
+                <div class="kpi-value">${formatCurrency(totalPending)}</div>
                 <div class="kpi-subtitle">${t('kpi_bills_pending', { n: pendingBills.length })}</div>
             </div>
             <div class="kpi-card danger">
                 <div class="kpi-header"><span class="kpi-label">${t('kpi_overdue')}</span><div class="kpi-icon">🔴</div></div>
-                <div class="kpi-value">R$ ${totalOverdue.toFixed(2)}</div>
+                <div class="kpi-value">${formatCurrency(totalOverdue)}</div>
                 <div class="kpi-subtitle">${t('kpi_overdue_bills', { n: overdueBills.length })}</div>
             </div>
         `;

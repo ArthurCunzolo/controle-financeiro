@@ -5,38 +5,48 @@
  */
 
 const Modal = {
+    _escHandlers: new Map(),
+
     /** Open a modal by ID */
     open(modalId) {
         const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
+        if (!modal) return;
 
-            // Close on overlay click
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    this.close(modalId);
-                }
-            });
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
 
-            // Close on Escape key
-            const escHandler = (e) => {
-                if (e.key === 'Escape') {
-                    this.close(modalId);
-                    document.removeEventListener('keydown', escHandler);
-                }
-            };
-            document.addEventListener('keydown', escHandler);
+        // Remove previous listeners to prevent memory leak
+        if (this._escHandlers.has(modalId)) {
+            document.removeEventListener('keydown', this._escHandlers.get(modalId));
         }
+
+        // Close on overlay click
+        modal.onclick = (e) => {
+            if (e.target === modal) this.close(modalId);
+        };
+
+        // Close on Escape key
+        const escHandler = (e) => {
+            if (e.key === 'Escape') this.close(modalId);
+        };
+        this._escHandlers.set(modalId, escHandler);
+        document.addEventListener('keydown', escHandler);
     },
 
     /** Close a modal by ID */
     close(modalId) {
         const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.remove('active');
-            document.body.style.overflow = '';
+        if (!modal) return;
+
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+
+        // Clean up escape handler
+        if (this._escHandlers.has(modalId)) {
+            document.removeEventListener('keydown', this._escHandlers.get(modalId));
+            this._escHandlers.delete(modalId);
         }
+        modal.onclick = null;
     },
 
     /** Show a confirmation dialog — returns a Promise<boolean> */
@@ -53,29 +63,29 @@ const Modal = {
                         <p style="color: var(--text-secondary); font-size: 14px;">${message}</p>
                     </div>
                     <div class="modal-footer">
-                        <button class="btn btn-outline" id="confirm-cancel">Cancel</button>
-                        <button class="btn btn-danger" id="confirm-ok">Confirm</button>
+                        <button class="btn btn-outline" id="confirm-cancel">${typeof t === 'function' ? t('cancel') : 'Cancel'}</button>
+                        <button class="btn btn-danger" id="confirm-ok">${typeof t === 'function' ? t('yes') : 'Confirm'}</button>
                     </div>
                 </div>
             `;
             document.body.appendChild(overlay);
 
-            overlay.querySelector('#confirm-cancel').addEventListener('click', () => {
+            const cleanup = (result) => {
                 overlay.remove();
-                resolve(false);
-            });
+                document.removeEventListener('keydown', escHandler);
+                resolve(result);
+            };
 
-            overlay.querySelector('#confirm-ok').addEventListener('click', () => {
-                overlay.remove();
-                resolve(true);
-            });
-
+            overlay.querySelector('#confirm-cancel').addEventListener('click', () => cleanup(false));
+            overlay.querySelector('#confirm-ok').addEventListener('click', () => cleanup(true));
             overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) {
-                    overlay.remove();
-                    resolve(false);
-                }
+                if (e.target === overlay) cleanup(false);
             });
+
+            const escHandler = (e) => {
+                if (e.key === 'Escape') cleanup(false);
+            };
+            document.addEventListener('keydown', escHandler);
         });
     }
 };

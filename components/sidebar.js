@@ -101,6 +101,8 @@ const Sidebar = {
                 this.setActive(page);
                 window.location.hash = page;
                 document.getElementById('sidebar').classList.remove('open');
+                const overlay = document.getElementById('sidebar-overlay');
+                if (overlay) overlay.remove();
             });
         });
 
@@ -119,7 +121,24 @@ const Sidebar = {
         const toggle = document.getElementById('sidebar-toggle');
         if (toggle) {
             toggle.addEventListener('click', () => {
-                document.getElementById('sidebar').classList.toggle('open');
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.toggle('open');
+                // Create/remove overlay
+                let overlay = document.getElementById('sidebar-overlay');
+                if (sidebar.classList.contains('open')) {
+                    if (!overlay) {
+                        overlay = document.createElement('div');
+                        overlay.id = 'sidebar-overlay';
+                        overlay.className = 'sidebar-overlay';
+                        overlay.addEventListener('click', () => {
+                            sidebar.classList.remove('open');
+                            overlay.remove();
+                        });
+                        document.body.appendChild(overlay);
+                    }
+                } else if (overlay) {
+                    overlay.remove();
+                }
             });
         }
     },
